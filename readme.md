@@ -2,7 +2,7 @@
 
 > Predict match outcomes for all 48 FIFA World Cup 2026 nations using historical international football data and machine learning — deployed as an interactive web app.
 
-**[🚀 Live Demo]([YOUR_STREAMLIT_URL_HERE](https://predicto-wc.streamlit.app/))**
+**[🚀 Live Demo]([https://predicto-wc.streamlit.app/])**
 
 ---
 
