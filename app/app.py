@@ -280,14 +280,20 @@ TEAM_NAMES = sorted(WC2026_TEAMS.keys())
 
 
 NAME_MAP = {
-    "Turkey":                 "Turkey",
     "IR Iran":                "Iran",
     "Korea Republic":         "South Korea",
     "Cabo Verde":             "Cape Verde",
-    "DR Congo":               "DR Congo",
-    "Côte d'Ivoire":         "Ivory Coast",
-    "Bosnia and Herzegovina": "Bosnia-Herzegovina",
+    "Côte d'Ivoire":          "Ivory Coast",
+    "Bosnia and Herzegovina": "Bosnia and Herzegovina",
     "United States":          "United States",
+    "Czechia":                "Czech Republic",
+    "Turkey":                 "Turkey",
+    "DR Congo":               "DR Congo",
+    "Curaçao":                "Curaçao",
+    "Haiti":                  "Haiti",
+    "Jordan":                 "Jordan",
+    "Uzbekistan":             "Uzbekistan",
+    "New Zealand":            "New Zealand",
 }
 
 @st.cache_data
