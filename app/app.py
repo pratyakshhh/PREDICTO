@@ -487,22 +487,28 @@ if predict:
     away_known = away_ds_name in known_teams
 
     if not home_known or not away_known:
-        unknown = []
-        if not home_known: unknown.append(home_team)
-        if not away_known: unknown.append(away_team)
-        st.warning(
-            f"{', '.join(unknown)} not found in historical data "
-            f"(debut nation or name mismatch). Using average encoding."
-        )
+      unknown = []
+      if not home_known: unknown.append(home_team)
+      if not away_known: unknown.append(away_team)
+      st.warning(
+        f"⚠️ {', '.join(unknown)} has limited or no historical data. "
+        f"Prediction may not be reliable for debut/small nations."
+      )
 
-    home_enc  = le.transform([home_ds_name])[0] if home_known else int(len(le.classes_)/2)
-    away_enc  = le.transform([away_ds_name])[0] if away_known else int(len(le.classes_)/2)
-    form_diff = home_form - away_form
+    # For unknown teams use median encoding + neutral form
+    home_enc = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
+    away_enc = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
+
+    # For unknown teams force form to 0.4 (below average — realistic for debut nations)
+    home_form_model = home_form if home_known else 0.4
+    away_form_model = away_form if away_known else 0.4
+    form_diff = home_form_model - away_form_model
     h2h_rate  = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
+
 
     X_pred = pd.DataFrame([[
         home_enc, away_enc,
-        home_form, away_form, form_diff,
+        home_form_model, away_form_model, form_diff,
         h2h_rate, int(is_neutral)
     ]], columns=[
         "home_team_enc", "away_team_enc",
