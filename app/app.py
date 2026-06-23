@@ -349,11 +349,12 @@ with col_home:
     </div>
     """, unsafe_allow_html=True)
     home_form = st.slider(
-        "Recent form", 0.0, 1.0, 0.6, 0.05,
-        format="%.0f%%",
-        help="Win rate over last 10 matches. 0% = lost all. 100% = won all.",
-        key="home_form"
-    )
+    "Recent form", 0, 100, 60, 5,
+    format="%d%%",
+    help="Win rate over last 10 matches. 0% = lost all. 100% = won all.",
+    key="home_form"
+    ) / 100
+    
 
 with col_vs:
     st.markdown("""
@@ -383,10 +384,10 @@ with col_away:
     </div>
     """, unsafe_allow_html=True)
     away_form = st.slider(
-        "Recent form", 0.0, 1.0, 0.5, 0.05,
-        format="%.0f%%",
-        key="away_form"
-    )
+    "Recent form", 0, 100, 50, 5,
+    format="%d%%",
+    key="away_form"
+    ) / 100
 
 
 
