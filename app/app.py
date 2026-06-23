@@ -498,10 +498,17 @@ if predict:
     # For unknown teams use median encoding + neutral form
     home_enc = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
     away_enc = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
+    # Realistic form estimates for debut/small nations based on FIFA ranking
+    DEBUT_FORM = { "Curaçao":   0.35,
+    "Jordan":    0.30,
+    "Uzbekistan": 0.32,
+    "Haiti":     0.28,
+    "Cabo Verde": 0.33,
+    "New Zealand": 0.30,
+    }   
 
-    # For unknown teams force form to 0.4 (below average — realistic for debut nations)
-    home_form_model = home_form if home_known else 0.4
-    away_form_model = away_form if away_known else 0.4
+    home_form_model = home_form if home_known else DEBUT_FORM.get(home_team, 0.35)
+    away_form_model = away_form if away_known else DEBUT_FORM.get(away_team, 0.35)
     form_diff = home_form_model - away_form_model
     h2h_rate  = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
 
