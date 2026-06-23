@@ -290,6 +290,28 @@ NAME_MAP = {
     "United States":          "United States",
 }
 
+@st.cache_data
+def calculate_form(team_ds_name, data, n=10):
+    past = data[
+        (data["home_team"] == team_ds_name) |
+        (data["away_team"] == team_ds_name)
+    ].tail(n)
+
+    if len(past) == 0:
+        return 0.5
+
+    wins = 0
+    for _, row in past.iterrows():
+        if row["home_team"] == team_ds_name and row["result"] == "Home Win":
+            wins += 1
+        elif row["away_team"] == team_ds_name and row["result"] == "Away Win":
+            wins += 1
+
+    return round(wins / len(past), 4)
+
+
+
+
 def to_dataset_name(team):
     return NAME_MAP.get(team, team)
 
@@ -348,12 +370,16 @@ with col_home:
       </span>
     </div>
     """, unsafe_allow_html=True)
-    home_form = st.slider(
-    "Recent form", 0, 100, 60, 5,
-    format="%d%%",
-    help="Win rate over last 10 matches. 0% = lost all. 100% = won all.",
-    key="home_form"
-    ) / 100
+    home_form = calculate_form(to_dataset_name(home_team), df)
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:8px">
+      <span style="color:#8899bb;font-size:0.75rem;text-transform:uppercase;
+                   letter-spacing:1px">Recent Form</span><br>
+      <span style="color:#FFD700;font-size:1.8rem;font-weight:700;
+                   font-family:'Bebas Neue',sans-serif">{home_form:.0%}</span>
+      <span style="color:#8899bb;font-size:0.75rem"> (last 10 matches)</span>
+    </div>
+    """, unsafe_allow_html=True)
     
 
 with col_vs:
@@ -377,17 +403,22 @@ with col_away:
     <div style="text-align:center; margin: 8px 0">
       <div class="flag-row">{away_info['flag']}</div>
       <span class="conf-badge" style="background:{away_info['conf_color']}22;
-            color:{away_info['conf_color']}44;
+            color:{away_info['conf_color'].replace('1a','88').replace('3a','bb').replace('6b','ee')}44;
             border:1px solid {away_info['conf_color']}44">
         {away_info['conf']}
       </span>
     </div>
     """, unsafe_allow_html=True)
-    away_form = st.slider(
-    "Recent form", 0, 100, 50, 5,
-    format="%d%%",
-    key="away_form"
-    ) / 100
+    away_form = calculate_form(to_dataset_name(away_team), df)
+    st.markdown(f"""
+    <div style="text-align:center;margin-top:8px">
+      <span style="color:#8899bb;font-size:0.75rem;text-transform:uppercase;
+                   letter-spacing:1px">Recent Form</span><br>
+      <span style="color:#FFD700;font-size:1.8rem;font-weight:700;
+                   font-family:'Bebas Neue',sans-serif">{away_form:.0%}</span>
+      <span style="color:#8899bb;font-size:0.75rem"> (last 10 matches)</span>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 
