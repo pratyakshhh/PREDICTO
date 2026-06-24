@@ -210,6 +210,22 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+FIFA_RANKINGS = {
+    "Argentina": 1, "France": 2, "Spain": 3, "England": 4,
+    "Brazil": 5, "Belgium": 6, "Portugal": 7, "Netherlands": 8,
+    "Germany": 9, "Croatia": 11, "Morocco": 12, "Uruguay": 13,
+    "Colombia": 14, "Japan": 15, "United States": 16, "Mexico": 17,
+    "Senegal": 18, "Switzerland": 19, "Ecuador": 21, "IR Iran": 22,
+    "Korea Republic": 23, "Norway": 24, "Turkey": 25, "Austria": 26,
+    "Sweden": 27, "Australia": 28, "South Africa": 29, "Canada": 30,
+    "Tunisia": 31, "Algeria": 32, "Czechia": 33, "Scotland": 34,
+    "Egypt": 35, "Ghana": 36, "Qatar": 37, "Paraguay": 38,
+    "Côte d'Ivoire": 39, "Bosnia and Herzegovina": 40,
+    "Saudi Arabia": 41, "DR Congo": 42, "Iraq": 43, "New Zealand": 44,
+    "Jordan": 45, "Uzbekistan": 46, "Haiti": 47, "Curaçao": 48,
+    "Cabo Verde": 49
+}
+
 
 # All 48 World Cup 2026 teams with flags and confederation
 
@@ -502,31 +518,26 @@ if predict:
       )
 
     # For unknown teams use median encoding + neutral form
-    home_enc = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
-    away_enc = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
-    # Realistic form estimates for debut/small nations based on FIFA ranking
-    DEBUT_FORM = { "Curaçao":   0.35,
-    "Jordan":    0.30,
-    "Uzbekistan": 0.32,
-    "Haiti":     0.28,
-    "Cabo Verde": 0.33,
-    "New Zealand": 0.30,
-    }   
-
-    home_form_model = home_form if home_known else DEBUT_FORM.get(home_team, 0.35)
-    away_form_model = away_form if away_known else DEBUT_FORM.get(away_team, 0.35)
+    home_enc  = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
+    away_enc  = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
     form_diff = home_form_model - away_form_model
     h2h_rate  = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
 
+    # FIFA rankings
+    home_rank = FIFA_RANKINGS.get(home_team, 80)
+    away_rank = FIFA_RANKINGS.get(away_team, 80)
+    rank_diff = home_rank - away_rank
 
     X_pred = pd.DataFrame([[
-        home_enc, away_enc,
-        home_form_model, away_form_model, form_diff,
-        h2h_rate, int(is_neutral)
+      home_enc, away_enc,
+      home_form_model, away_form_model, form_diff,
+      h2h_rate, int(is_neutral),
+      home_rank, away_rank, rank_diff
     ]], columns=[
-        "home_team_enc", "away_team_enc",
-        "home_form", "away_form", "form_diff",
-        "home_h2h_rate", "is_neutral"
+    "home_team_enc", "away_team_enc",
+    "home_form", "away_form", "form_diff",
+    "home_h2h_rate", "is_neutral",
+    "home_rank", "away_rank", "rank_diff"
     ])
 
     prediction = model.predict(X_pred)[0]

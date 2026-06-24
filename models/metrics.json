@@ -1,1 +1,1 @@
-{"model_name": "Gradient Boosting", "accuracy": 0.5457, "f1_score": 0.473, "roc_auc": 0.4045}
+{"model_name": "Random Forest", "accuracy": 0.5583, "f1_score": 0.4845, "roc_auc": 0.3968}
