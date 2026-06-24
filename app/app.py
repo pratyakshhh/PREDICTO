@@ -542,6 +542,19 @@ if predict:
     ])
 
     if is_neutral:
+        # Predict both ways and average to remove positional bias
+        X_pred_normal = pd.DataFrame([[
+            home_enc, away_enc,
+            home_form_val, away_form_val, form_diff,
+            h2h_rate, int(is_neutral),
+            home_rank, away_rank, rank_diff
+        ]], columns=[
+            "home_team_enc", "away_team_enc",
+            "home_form", "away_form", "form_diff",
+            "home_h2h_rate", "is_neutral",
+            "home_rank", "away_rank", "rank_diff"
+        ])
+
         X_pred_swapped = pd.DataFrame([[
             away_enc, home_enc,
             away_form_val, home_form_val, -form_diff,
@@ -554,31 +567,43 @@ if predict:
             "home_rank", "away_rank", "rank_diff"
         ])
 
-        probas_normal  = model.predict_proba(X_pred)[0]
-        probas_swapped = model.predict_proba(X_pred_swapped)[0]
-        classes        = list(model.classes_)
+        pn = model.predict_proba(X_pred_normal)[0]
+        ps = model.predict_proba(X_pred_swapped)[0]
+        classes = list(model.classes_)
 
-        home_win_avg = (probas_normal[classes.index("Home Win")] +
-                        probas_swapped[classes.index("Away Win")]) / 2
-        away_win_avg = (probas_normal[classes.index("Away Win")] +
-                        probas_swapped[classes.index("Home Win")]) / 2
-        draw_avg     = (probas_normal[classes.index("Draw")] +
-                        probas_swapped[classes.index("Draw")]) / 2
+        hw_idx = classes.index("Home Win")
+        aw_idx = classes.index("Away Win")
+        dr_idx = classes.index("Draw")
 
-        prob_dict  = {"Home Win": home_win_avg, "Away Win": away_win_avg, "Draw": draw_avg}
+        # Average — swap Home Win and Away Win in the swapped prediction
+        home_win_prob = (pn[hw_idx] + ps[aw_idx]) / 2
+        away_win_prob = (pn[aw_idx] + ps[hw_idx]) / 2
+        draw_prob     = (pn[dr_idx] + ps[dr_idx]) / 2
+
+        prob_dict  = {
+            "Home Win": home_win_prob,
+            "Away Win": away_win_prob,
+            "Draw":     draw_prob
+        }
         prediction = max(prob_dict, key=prob_dict.get)
-        probas     = model.predict_proba(X_pred)[0]
+        probas     = [prob_dict[c] for c in classes]
 
     else:
-        prediction = model.predict(X_pred)[0]
-        probas     = model.predict_proba(X_pred)[0]
+        X_pred_normal = pd.DataFrame([[
+            home_enc, away_enc,
+            home_form_val, away_form_val, form_diff,
+            h2h_rate, int(is_neutral),
+            home_rank, away_rank, rank_diff
+        ]], columns=[
+            "home_team_enc", "away_team_enc",
+            "home_form", "away_form", "form_diff",
+            "home_h2h_rate", "is_neutral",
+            "home_rank", "away_rank", "rank_diff"
+        ])
+        prediction = model.predict(X_pred_normal)[0]
+        probas     = model.predict_proba(X_pred_normal)[0]
         classes    = list(model.classes_)
         prob_dict  = dict(zip(classes, probas))
-
-    prediction = model.predict(X_pred)[0]
-    probas     = model.predict_proba(X_pred)[0]
-    classes    = list(model.classes_)
-    prob_dict  = dict(zip(classes, probas))
 
     ordered      = ["Home Win", "Draw", "Away Win"]
     winner_label = {
