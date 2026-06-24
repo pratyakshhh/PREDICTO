@@ -481,7 +481,7 @@ if len(h2h) > 0:
                         "away_team","tournament"]].sort_values("date", ascending=False)
         display.columns = ["Date","Home","H","A","Away","Tournament"]
         st.dataframe(display.head(20).reset_index(drop=True),
-                     use_container_width=True, hide_index=True)
+                     width="stretch", hide_index=True)
 else:
     st.info(f"No recorded matches between {home_team} and {away_team} in the dataset.")
 
@@ -492,7 +492,7 @@ else:
 st.divider()
 
 st.markdown('<div class="predict-btn">', unsafe_allow_html=True)
-predict = st.button("⚡ Predict Match Outcome", use_container_width=True)
+predict = st.button("⚡ Predict Match Outcome", width="stretch")
 st.markdown('</div>', unsafe_allow_html=True)
 
 if predict:
@@ -520,7 +520,7 @@ if predict:
     # For unknown teams use median encoding + neutral form
     home_enc  = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
     away_enc  = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
-    form_diff = home_form_model - away_form_model
+    form_diff = home_form - away_form
     h2h_rate  = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
 
     # FIFA rankings
