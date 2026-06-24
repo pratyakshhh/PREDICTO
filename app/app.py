@@ -518,27 +518,62 @@ if predict:
       )
 
     # For unknown teams use median encoding + neutral form
-    home_enc  = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
-    away_enc  = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
-    form_diff = home_form - away_form
-    h2h_rate  = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
+    home_enc      = le.transform([home_ds_name])[0] if home_known else int(np.median(range(len(le.classes_))))
+    away_enc      = le.transform([away_ds_name])[0] if away_known else int(np.median(range(len(le.classes_))))
+    home_form_val = home_form if home_known else 0.35
+    away_form_val = away_form if away_known else 0.35
+    form_diff     = home_form_val - away_form_val
+    h2h_rate      = home_wins_h2h / len(h2h) if len(h2h) > 0 else 0.5
 
-    # FIFA rankings
     home_rank = FIFA_RANKINGS.get(home_team, 80)
     away_rank = FIFA_RANKINGS.get(away_team, 80)
     rank_diff = home_rank - away_rank
 
     X_pred = pd.DataFrame([[
-      home_enc, away_enc,
-      home_form_model, away_form_model, form_diff,
-      h2h_rate, int(is_neutral),
-      home_rank, away_rank, rank_diff
+        home_enc, away_enc,
+        home_form_val, away_form_val, form_diff,
+        h2h_rate, int(is_neutral),
+        home_rank, away_rank, rank_diff
     ]], columns=[
-    "home_team_enc", "away_team_enc",
-    "home_form", "away_form", "form_diff",
-    "home_h2h_rate", "is_neutral",
-    "home_rank", "away_rank", "rank_diff"
+        "home_team_enc", "away_team_enc",
+        "home_form", "away_form", "form_diff",
+        "home_h2h_rate", "is_neutral",
+        "home_rank", "away_rank", "rank_diff"
     ])
+
+    if is_neutral:
+        X_pred_swapped = pd.DataFrame([[
+            away_enc, home_enc,
+            away_form_val, home_form_val, -form_diff,
+            1 - h2h_rate, int(is_neutral),
+            away_rank, home_rank, -rank_diff
+        ]], columns=[
+            "home_team_enc", "away_team_enc",
+            "home_form", "away_form", "form_diff",
+            "home_h2h_rate", "is_neutral",
+            "home_rank", "away_rank", "rank_diff"
+        ])
+
+        probas_normal  = model.predict_proba(X_pred)[0]
+        probas_swapped = model.predict_proba(X_pred_swapped)[0]
+        classes        = list(model.classes_)
+
+        home_win_avg = (probas_normal[classes.index("Home Win")] +
+                        probas_swapped[classes.index("Away Win")]) / 2
+        away_win_avg = (probas_normal[classes.index("Away Win")] +
+                        probas_swapped[classes.index("Home Win")]) / 2
+        draw_avg     = (probas_normal[classes.index("Draw")] +
+                        probas_swapped[classes.index("Draw")]) / 2
+
+        prob_dict  = {"Home Win": home_win_avg, "Away Win": away_win_avg, "Draw": draw_avg}
+        prediction = max(prob_dict, key=prob_dict.get)
+        probas     = model.predict_proba(X_pred)[0]
+
+    else:
+        prediction = model.predict(X_pred)[0]
+        probas     = model.predict_proba(X_pred)[0]
+        classes    = list(model.classes_)
+        prob_dict  = dict(zip(classes, probas))
 
     prediction = model.predict(X_pred)[0]
     probas     = model.predict_proba(X_pred)[0]
